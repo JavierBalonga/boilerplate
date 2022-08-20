@@ -1,0 +1,9 @@
+{
+  "execMap": {
+    "ts": "ts-node"
+  },
+  "watch": ["src", ".env"],
+  "ext": "ts,js",
+  "ignore": [".git", "node_modules"],
+  "exec": "ts-node ./src/index.ts"
+}
