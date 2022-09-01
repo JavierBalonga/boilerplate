@@ -12,3 +12,15 @@ model Example {
   name        String  @db.VarChar(255)
   description String? @db.VarChar(1024)
 }
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique @db.VarChar(255)
+  password String @db.VarChar(255)
+  role     Role   @default(CLIENT)
+}

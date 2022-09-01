@@ -11,6 +11,7 @@ const envSchema = yup.object().shape({
   PORT: yup.number().default(3001),
   DATABASE_URL: yup.string().required(),
   DATABASE_LOGS: yup.bool().default(false),
+  JWT_SECRET: yup.string().required(),
 });
 
 const env = envSchema.validateSync(process.env);
