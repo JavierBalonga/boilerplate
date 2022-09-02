@@ -1,9 +1,6 @@
 import { Router } from "express";
 import prisma from "../../../database";
-import jwt from "jsonwebtoken";
-import env from "../../../env";
-
-const { JWT_SECRET } = env;
+import { jwtSign } from "../../common/jwt";
 
 const authRouter = Router();
 
@@ -35,7 +32,7 @@ authRouter.post("/login", async (req, res, next) => {
         .status(400)
         .json({ message: "the email or password is invalid" });
     }
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET);
+    const token = jwtSign({ id: user.id, role: user.role });
     res.status(200).json({ token: token });
   } catch (error) {
     next(error);

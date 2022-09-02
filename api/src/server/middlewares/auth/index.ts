@@ -1,41 +1,44 @@
 import { Role } from "@prisma/client";
 import { Handler } from "express";
-import jwt from "jsonwebtoken";
-import env from "../../../env";
+import { jwtVerify, TokenPaylad } from "../../common/jwt";
 
-const { JWT_SECRET } = env;
+export const authMiddleware: Handler = (req, res, next) => {
+  const header = req.headers.authorization;
+  if (!header) {
+    return res
+      .status(401)
+      .json({ message: "'authorization' header not found" });
+  }
+  const [tokenType, token] = header.split(" ");
+  if (tokenType !== "Bearer") {
+    return res
+      .status(401)
+      .json({ message: "'Bearer' is the only allowed tokenType" });
+  }
+  const tokenPayload = jwtVerify(token);
+  try {
+    Object.assign(req, { user: tokenPayload });
+  } catch (error) {
+    return res.status(401).json({ message: error.message });
+  }
+  next();
+};
 
-interface Token {
-  id: number;
-  iat: number;
-  role: Role;
-}
-
-function authMiddleware(...allowedRoles: Role[]) {
+export function autzMiddleware(...allowedRoles: Role[]) {
   const middleware: Handler = (req, res, next) => {
-    const header = req.headers.authorization;
-    if (!header) {
+    const tokenPayload = req.user as TokenPaylad;
+    if (!tokenPayload) {
+      return res
+        .status(500)
+        .json({ message: `'autzMiddleware' should be after 'authMiddleware'` });
+    }
+    const hasAllowedRole = allowedRoles.includes(tokenPayload.role);
+    if (!hasAllowedRole) {
       return res
         .status(401)
-        .json({ message: "'authorization' header not found" });
+        .json({ message: "the user does not have an allowed role" });
     }
-    const [tokenType, token] = header.split(" ");
-    try {
-      const tokenPayload = jwt.verify(token, JWT_SECRET) as Token;
-      const hasAllowedRole = allowedRoles.includes(tokenPayload.role);
-      if (!hasAllowedRole) {
-        return res
-          .status(401)
-          .json({ message: "the user does not have an allowed role" });
-      }
-      Object.assign(req, { user: tokenPayload });
-    } catch (error) {
-      return res.status(401).json({ message: error.message });
-    }
-
     next();
   };
   return middleware;
 }
-
-export default authMiddleware;

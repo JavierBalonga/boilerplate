@@ -5,13 +5,14 @@ import getExamplesQuerySchema from "./schemas/getExamplesQuerySchema";
 import createExampleSchema from "./schemas/createExampleSchema";
 import updateExampleSchema from "./schemas/updateExampleSchema";
 import examplesIdSchema from "./schemas/examplesIdSchema";
-import authMiddleware from "../../middlewares/auth";
+import { authMiddleware, autzMiddleware } from "../../middlewares/auth";
 
 const examplesRouter = Router();
 
 examplesRouter.get(
   "/",
-  authMiddleware("ADMIN", "CLIENT"),
+  authMiddleware,
+  autzMiddleware("ADMIN", "CLIENT"),
   async (req, res, next) => {
     // @ts-ignore
     console.log("req.user", req.user);
@@ -46,32 +47,43 @@ examplesRouter.get(
   }
 );
 
-examplesRouter.post("/", authMiddleware("ADMIN"), async (req, res, next) => {
-  try {
-    const attr = await createExampleSchema.validate(req.body);
-    const example = await prisma.example.create({ data: attr });
-    return res.status(201).json(example);
-  } catch (error) {
-    return next(error);
+examplesRouter.post(
+  "/",
+  authMiddleware,
+  autzMiddleware("ADMIN"),
+  async (req, res, next) => {
+    try {
+      const attr = await createExampleSchema.validate(req.body);
+      const example = await prisma.example.create({ data: attr });
+      return res.status(201).json(example);
+    } catch (error) {
+      return next(error);
+    }
   }
-});
+);
 
-examplesRouter.put("/", authMiddleware("ADMIN"), async (req, res, next) => {
-  try {
-    const { id, ...attr } = await updateExampleSchema.validate(req.body);
-    const example = await prisma.example.update({
-      where: { id: id },
-      data: attr,
-    });
-    return res.status(200).json(example);
-  } catch (error) {
-    return next(error);
+examplesRouter.put(
+  "/",
+  authMiddleware,
+  autzMiddleware("ADMIN"),
+  async (req, res, next) => {
+    try {
+      const { id, ...attr } = await updateExampleSchema.validate(req.body);
+      const example = await prisma.example.update({
+        where: { id: id },
+        data: attr,
+      });
+      return res.status(200).json(example);
+    } catch (error) {
+      return next(error);
+    }
   }
-});
+);
 
 examplesRouter.delete(
   "/:id",
-  authMiddleware("ADMIN"),
+  authMiddleware,
+  autzMiddleware("ADMIN"),
   async (req, res, next) => {
     try {
       const id = await examplesIdSchema.validate(req.params.id);
